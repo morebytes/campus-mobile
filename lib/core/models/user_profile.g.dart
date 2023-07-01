@@ -20,31 +20,34 @@ class UserProfileModelAdapter extends TypeAdapter<UserProfileModel> {
       disabledLots: (fields[0] as List?)?.cast<String>(),
       disabledOccuspaceLocations: (fields[1] as List?)?.cast<String?>(),
       subscribedTopics: (fields[2] as List?)?.cast<String?>(),
-      disabledParkingSpots: (fields[3] as Map?)?.cast<String?, bool>(),
-      disabledParkingLots: (fields[4] as Map?)?.cast<String?, bool>(),
+      disabledParkingSpots: (fields[8] as List?)?.cast<String?>(),
+      disabledParkingLots: (fields[9] as List?)?.cast<String?>(),
       disabledStops: (fields[5] as List?)?.cast<int?>(),
       surveyCompletion: (fields[6] as List?)?.cast<String>(),
+      disabledVentilationLocations: (fields[7] as List?)?.cast<String?>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, UserProfileModel obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.disabledLots)
       ..writeByte(1)
       ..write(obj.disabledOccuspaceLocations)
       ..writeByte(2)
       ..write(obj.subscribedTopics)
-      ..writeByte(3)
+      ..writeByte(8)
       ..write(obj.disabledParkingSpots)
-      ..writeByte(4)
+      ..writeByte(9)
       ..write(obj.disabledParkingLots)
       ..writeByte(5)
       ..write(obj.disabledStops)
       ..writeByte(6)
-      ..write(obj.surveyCompletion);
+      ..write(obj.surveyCompletion)
+      ..writeByte(7)
+      ..write(obj.disabledVentilationLocations);
   }
 
   @override

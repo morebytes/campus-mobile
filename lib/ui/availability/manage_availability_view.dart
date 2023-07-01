@@ -31,52 +31,30 @@ class ManageAvailabilityView extends HookWidget
     );
   }
 
-  // void _onReorder(int oldIndex, int newIndex) {
-  //   if (newIndex > oldIndex) {
-  //     newIndex -= 1;
-  //   }
-  //   List<AvailabilityModel?> newOrder =
-  //       _availabilityDataProvider.availabilityModels;
-  //
-  //   //TODO: what is the point of this??
-  //   List<AvailabilityModel> toRemove = [];
-  //   newOrder.removeWhere((element) => toRemove.contains(element));
-  //
-  //   AvailabilityModel? item = newOrder.removeAt(oldIndex);
-  //   newOrder.insert(newIndex, item);
-  //   List<String?> orderedLocationNames = [];
-  //   for (AvailabilityModel? item in newOrder) {
-  //     orderedLocationNames.add(item!.name);
-  //   }
-  //   _availabilityDataProvider.reorderLocations(orderedLocationNames);
-  // }
-
   List<Widget> buildLocationsList(BuildContext context, List<AvailabilityModel> availabilityModels) {
     List<Widget> list = [];
-    for (AvailabilityModel? model in availabilityModels) {
-      if (model != null) {
-        list.add(ListTile(
-          key: Key(model.name.toString()),
-          title: Text(
-            model.name!,
-          ),
-          leading: Icon(
-            Icons.reorder,
-          ),
-          trailing: Switch(
-            value: !Provider.of<UserDataProvider>(context)
-                .userProfileModel!
-                .isOccuspaceLocationDisabled(model.name!), // check if the user did not disable a location
-            // activeColor: Theme.of(context).buttonColor,
-            activeColor: Theme.of(context).backgroundColor,
-            onChanged: (_) {
-              Provider.of<UserDataProvider>(context, listen: false)
-                  .toggleOccuspaceLocation(model.name!);
-              //_availabilityDataProvider.toggleLocation(model.name);
-            },
-          ),
-        ));
-      }
+    for (AvailabilityModel model in availabilityModels) {
+      list.add(ListTile(
+        key: Key(model.name.toString()),
+        title: Text(
+          model.name!,
+        ),
+        leading: Icon(
+          Icons.reorder,
+        ),
+        trailing: Switch(
+          value: !Provider.of<UserDataProvider>(context)
+              .userProfileModel!
+              .isOccuspaceLocationDisabled(model.name!), // check if the user did not disable a location
+          // activeColor: Theme.of(context).buttonColor,
+          activeColor: Theme.of(context).backgroundColor,
+          onChanged: (_) {
+            Provider.of<UserDataProvider>(context, listen: false)
+                .toggleOccuspaceLocation(model.name!);
+            //_availabilityDataProvider.toggleLocation(model.name);
+          },
+        ),
+      ));
     }
     return list;
   }

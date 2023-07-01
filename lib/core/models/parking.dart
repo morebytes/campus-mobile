@@ -4,10 +4,13 @@
 
 import 'dart:convert';
 
-import 'package:campus_mobile_experimental/core/models/user_profile.dart';
-
 List<ParkingModel> parkingModelFromJson(String str) => List<ParkingModel>.from(
-    json.decode(str).map((x) => ParkingModel.fromJson(x)));
+    json.decode(str//, reviver: (k, v) {
+    //   if ((k == "Open" || k == "Total") && v is String) {
+    //     return v == "" ? 0 : int.parse(v);
+    //   }
+    //   return v;}
+    ).map((x) => ParkingModel.fromJson(x)));
 
 String parkingModelToJson(List<ParkingModel> data) =>
     json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
@@ -19,9 +22,12 @@ class ParkingModel {
   String? locationName;
   String? locationContext;
   String? locationProvider;
-  Map<String, dynamic>? availability;
+  // NOTE: check if null makes a difference here
+  Map<String, Map<String, int>?>? availability;
   DateTime? lastUpdated;
   String? availabilityType;
+  static const MAX_SELECTED_LOTS = 10;
+  static const MAX_SELECTED_SPOTS = 3;
 
   ParkingModel({
     this.neighborhood,
@@ -46,9 +52,22 @@ class ParkingModel {
           json["LocationContext"] == null ? null : json["LocationContext"],
       locationProvider:
           json["LocationProvider"] == null ? null : json["LocationProvider"],
+      // TODO: automatically convert every String representation of integers to an actual int
       availability: json["Availability"] == null
           ? null
-          : json["Availability"] as Map<String, dynamic>?,
+          : Map<String, Map<String, int>>.from(
+              json["Availability"]
+              .map((k, v) =>
+                  MapEntry(k, Map<String, int>.from(v.map((k, v) {
+                        if (v == "" || v == null)
+                          return MapEntry(k, 0);
+                        else if (v is String)
+                          return MapEntry(k, int.parse(v));
+                        else
+                          return MapEntry(k, v);
+                      }))
+                  )
+              )),
       lastUpdated: json["lastUpdated"] == null
           ? null
           : DateTime.parse(json["LastUpdated"]),
@@ -69,10 +88,4 @@ class ParkingModel {
             lastUpdated == null ? null : lastUpdated!.toIso8601String(),
         "AvailabilityType": availabilityType == null ? null : availabilityType
       };
-}
-
-bool compareLocationsToUserProfile(ParkingModel model1, UserProfileModel model2)
-{
-  // blah blah
-  return true || false;
 }

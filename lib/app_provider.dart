@@ -10,7 +10,6 @@ import 'package:campus_mobile_experimental/core/providers/messages.dart';
 import 'package:campus_mobile_experimental/core/providers/notices.dart';
 import 'package:campus_mobile_experimental/core/providers/notifications.dart';
 import 'package:campus_mobile_experimental/core/providers/notifications_freefood.dart';
-import 'package:campus_mobile_experimental/core/providers/parking.dart';
 import 'package:campus_mobile_experimental/core/providers/scanner.dart';
 import 'package:campus_mobile_experimental/core/providers/scanner_message.dart';
 import 'package:campus_mobile_experimental/core/providers/shuttle.dart';
@@ -189,15 +188,6 @@ List<SingleChildWidget> dependentServices = [
     speedTestProvider!.coordinates = coordinates;
     speedTestProvider.userDataProvider = userDataProvider;
     return speedTestProvider;
-  }),
-  ChangeNotifierProxyProvider<UserDataProvider, ParkingDataProvider>(
-      create: (_) {
-    var parkingDataProvider = ParkingDataProvider();
-    return parkingDataProvider;
-  }, update: (_, userDataProvider, parkingDataProvider) {
-    parkingDataProvider!.userDataProvider = userDataProvider;
-    parkingDataProvider.fetchParkingData();
-    return parkingDataProvider;
   }),
   ChangeNotifierProxyProvider<UserDataProvider, MessagesDataProvider>(
     create: (_) {

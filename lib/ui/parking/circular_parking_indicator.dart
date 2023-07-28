@@ -1,11 +1,14 @@
 import 'package:campus_mobile_experimental/core/models/parking.dart';
 import 'package:campus_mobile_experimental/core/models/spot_types.dart';
-import 'package:campus_mobile_experimental/core/providers/parking.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:provider/provider.dart';
 
-class CircularParkingIndicators extends StatelessWidget {
+import '../../core/hooks/parking_query.dart';
+import '../../core/providers/user.dart';
+
+class CircularParkingIndicators extends HookWidget {
   const CircularParkingIndicators({
     Key? key,
     required this.model,
@@ -15,175 +18,123 @@ class CircularParkingIndicators extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userDataProvider = useMemoized(() {
+      debugPrint("Memoized UserDataProvider!");
+      return Provider.of<UserDataProvider>(context);
+    }, [context]);
+    useListenable(userDataProvider);
+
+    final spotTypes = useFetchSpotTypesModel();
+
+    if (spotTypes.isFetching)
+      return Center(
+          child: CircularProgressIndicator(
+              color: Theme.of(context).colorScheme.secondary
+          )
+      );
+
     return Column(
       children: [
         buildLocationTitle(),
-        buildLocationContext(context),
-        buildSpotsAvailableText(context),
+        buildLocationContext(),
+        buildSpotsAvailableText(spotTypes.data!),
         buildHistoricInfo(),
-        buildAllParkingAvailability(context),
+        buildAllParkingAvailability(spotTypes.data!, userDataProvider),
       ],
     );
   }
 
-  Widget buildAllParkingAvailability(BuildContext context) {
-    List<Widget> listOfCircularParkingInfo = [];
+  Widget buildAllParkingAvailability(List<Spot> spotTypes, UserDataProvider udp) {
+    // Get 3 displayable parking spots
+    List<Widget> displayableSpotWidgetsList = spotTypes
+        .where((spot) => udp.userProfileModel!.isParkingSpotEnabled(spot.spotKey!))
+        .take(3)
+        .map((spot) =>
+          buildParkingInfoOrShowCircularProgress(
+              spot, model.availability![spot.spotKey!]))
+        .toList();
 
-    List<String> selectedSpots = [];
-
-    Provider.of<ParkingDataProvider>(context)
-        .spotTypesState!
-        .forEach((key, value) {
-      if (value && selectedSpots.length < 4) {
-        selectedSpots.add(key!);
-      }
-    });
-    for (String spot in selectedSpots) {
-      if (model.availability != null) {
-        listOfCircularParkingInfo.add(buildCircularParkingInfo(
-            Provider.of<ParkingDataProvider>(context).spotTypeMap![spot],
-            model.availability![spot],
-            context));
-      }
-    }
     return Expanded(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: listOfCircularParkingInfo,
+        children: displayableSpotWidgetsList,
       ),
     );
   }
 
-  Widget buildCircularParkingInfo(
-      Spot? spotType, dynamic locationData, BuildContext context) {
-    int open;
-    int total;
+  Widget buildParkingInfoOrShowCircularProgress(Spot spot, Map<String, int>? locationData)
+  {
+    int open = 0, total = 0;
+    double percent = 0.0;
+    String displayText = "N/A";
+
     if (locationData != null) {
-      if (locationData["Open"] is String) {
-        open = locationData["Open"] == "" ? 0 : int.parse(locationData["Open"]);
-      } else {
-        open = locationData["Open"] == null ? 0 : locationData["Open"];
-      }
-      if (locationData["Total"] is String) {
-        total =
-            locationData["Total"] == "" ? 0 : int.parse(locationData["Total"]);
-      } else {
-        total = locationData["Total"] == null ? 0 : locationData["Total"];
-      }
-    } else {
-      open = 0;
-      total = 0;
+        open = locationData["Open"]!;
+        total = locationData["Total"]!;
+
+        if (total > 0)
+          percent = open / total;
+
+        displayText = (percent * 100).round().toString() + "%";
     }
 
-    return locationData != null
-        ? Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Center(
-                        child: SizedBox(
-                          height: 75,
-                          width: 75,
-                          child: CircularPercentIndicator(
-                            radius: 37,
-                            animation: true,
-                            animationDuration: 1000,
-                            lineWidth: 7.5,
-                            percent: open / total,
-                            center: Text(
-                                ((open / total) * 100).round().toString() + "%",
-                                style: TextStyle(fontSize: 22)),
-                            circularStrokeCap: CircularStrokeCap.round,
-                            backgroundColor: colorFromHex('#EDECEC'),
-                            progressColor: getColor(open / total),
-                          ),
-                        ),
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Center(
+                  child: SizedBox(
+                    height: 75,
+                    width: 75,
+                    child: CircularPercentIndicator(
+                      radius: 37,
+                      animation: locationData != null,
+                      animationDuration: 1000,
+                      lineWidth: 7.5,
+                      percent: percent,
+                      center: Text(
+                        displayText,
+                        style: TextStyle(fontSize: 22),
                       ),
-                    ],
+                      circularStrokeCap: CircularStrokeCap.round,
+                      backgroundColor: colorFromHex('#EDECEC'),
+                      progressColor: getColor(open / total),
+                    ),
                   ),
                 ),
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: spotType != null
-                      ? CircleAvatar(
-                          backgroundColor: colorFromHex(spotType.color!),
-                          child: spotType.text!.contains("&#x267f;")
-                              ? Icon(
-                                  Icons.accessible,
-                                  size: 25.0,
-                                  color: colorFromHex(spotType.textColor!),
-                                )
-                              : Text(
-                                  spotType.spotKey!.contains("SR")
-                                      ? "RS"
-                                      : spotType.text!,
-                                  style: TextStyle(
-                                    color: colorFromHex(spotType.textColor!),
-                                  ),
-                                ),
-                        )
-                      : Container(),
-                )
               ],
             ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(8.0),
+            child:
+                CircleAvatar(
+                  backgroundColor: colorFromHex(spot.color!),
+                  child: spot.text!.contains("&#x267f;")
+                    ? Icon(
+                        Icons.accessible,
+                        size: 25.0,
+                        color: colorFromHex(spot.textColor!),
+                      )
+                      : Text(
+                        spot.spotKey!.contains("SR") ? "RS" : spot.text!,
+                        style: TextStyle(
+                          color: colorFromHex(spot.textColor!),
+                      ),
+                  ),
+              )
           )
-        : Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Center(
-                        child: SizedBox(
-                          height: 75,
-                          width: 75,
-                          child: CircularPercentIndicator(
-                            radius: 37,
-                            animation: false,
-                            lineWidth: 7.5,
-                            percent: 0.0,
-                            center: Text("N/A", style: TextStyle(fontSize: 22)),
-                            backgroundColor: colorFromHex('#EDECEC'),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: spotType != null
-                      ? CircleAvatar(
-                          backgroundColor: colorFromHex(spotType.color!),
-                          child: spotType.text!.contains("&#x267f;")
-                              ? Icon(Icons.accessible,
-                                  size: 25.0,
-                                  color: colorFromHex(spotType.textColor!))
-                              : Text(
-                                  spotType.spotKey!.contains("SR")
-                                      ? "RS"
-                                      : spotType.text!,
-                                  style: TextStyle(
-                                    color: colorFromHex(spotType.textColor!),
-                                  ),
-                                ),
-                        )
-                      : Container(),
-                )
-              ],
-            ),
-          );
+        ],
+      ),
+    );
   }
 
-  Color colorFromHex(String hexColor) {
+  static Color colorFromHex(String hexColor) {
     final hexCode = hexColor.replaceAll('#', '');
     if (hexColor.length == 6) {
       hexColor =
@@ -192,7 +143,7 @@ class CircularParkingIndicators extends StatelessWidget {
     return Color(int.parse('FF$hexCode', radix: 16));
   }
 
-  Color getColor(double value) {
+  static Color getColor(double value) {
     if (value > .75) {
       return Colors.green;
     }
@@ -202,7 +153,7 @@ class CircularParkingIndicators extends StatelessWidget {
     return Colors.red;
   }
 
-  Widget buildLocationContext(BuildContext context) {
+  Widget buildLocationContext() {
     return Center(
       child: Text(model.locationContext ?? "",
           style: TextStyle(
@@ -243,17 +194,28 @@ class CircularParkingIndicators extends StatelessWidget {
     }
   }
 
-  Widget buildSpotsAvailableText(BuildContext context) {
+  /// Returns the total number of spots open at a given location
+  /// does not filter based on spot type
+  Map<String, num> getApproxNumOfOpenSpots() {
+    int openSpots = 0;
+    int totalSpots = 0;
+
+    model.availability!.forEach((spot, availability) {
+        openSpots += availability!['Open']!;
+        totalSpots += availability['Total']!;
+    });
+
+    return {"Open": openSpots, "Total": totalSpots};
+  }
+
+  Widget buildSpotsAvailableText(List<Spot> spots) {
     return Center(
       child: Text("~" +
-          Provider.of<ParkingDataProvider>(context)
-              .getApproxNumOfOpenSpots(model.locationName)["Open"]
-              .toString() +
+          getApproxNumOfOpenSpots()["Open"].toString() +
           " of " +
-          Provider.of<ParkingDataProvider>(context)
-              .getApproxNumOfOpenSpots(model.locationName)["Total"]
-              .toString() +
-          " Spots Available"),
+          getApproxNumOfOpenSpots()["Total"].toString() +
+          " Spots Available"
+      ),
     );
   }
 }

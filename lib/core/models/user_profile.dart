@@ -28,10 +28,10 @@ class UserProfileModel extends HiveObject {
   List<String?>? disabledOccuspaceLocations;
   @HiveField(2)
   List<String?>? subscribedTopics;
-  @HiveField(3)
-  Map<String?, bool>? disabledParkingSpots;
-  @HiveField(4)
-  Map<String?, bool>? disabledParkingLots;
+  @HiveField(8)
+  List<String?>? disabledParkingSpots;
+  @HiveField(9)
+  List<String?>? disabledParkingLots;
   @HiveField(5)
   List<int?>? disabledStops;
   @HiveField(6)
@@ -76,13 +76,13 @@ class UserProfileModel extends HiveObject {
             json["ucsdaffiliation"] == null ? null : json["ucsdaffiliation"],
         username: json["username"] == null ? null : json["username"],
         disabledParkingLots: json["selectedParkingLots"] == null
-            ? Map<String, bool>()
-            : Map<String, bool>.from(json["selectedParkingLots"]
-                .map((x, y) => MapEntry<String, bool>(x, y))),
+            ? []
+            : List<String>.from(
+            json["selectedParkingLots"].map((x) => x)),
         disabledParkingSpots: json["selectedParkingSpots"] == null
-            ? Map<String, bool>()
-            : Map<String, bool>.from(json["selectedParkingSpots"]
-                .map((x, y) => MapEntry<String, bool>(x, y))),
+            ? []
+            : List<String>.from(
+            json["selectedParkingSpots"].map((x) => x)),
         disabledStops: json["selectedStops"] == null
             ? []
             : List<int>.from(json["selectedStops"].map((x) => x)),
@@ -114,12 +114,10 @@ class UserProfileModel extends HiveObject {
         "username": username == null ? null : username,
         "selectedParkingLots": disabledParkingLots == null
             ? null
-            : Map.from(disabledParkingLots!
-                .map((x, y) => MapEntry<String?, bool>(x, y))),
+            : disabledParkingLots,
         "selectedParkingSpots": disabledParkingSpots == null
             ? null
-            : Map.from(disabledParkingSpots!
-                .map((x, y) => MapEntry<String?, bool>(x, y))),
+            : disabledParkingSpots,
         "selectedStops": disabledStops == null
             ? null
             : List<dynamic>.from(disabledStops!.map((x) => x)),
@@ -132,10 +130,11 @@ class UserProfileModel extends HiveObject {
       };
 
   // DATA OPERATION FUNCTIONS
-  bool isOccuspaceLocationDisabled(String name) => disabledOccuspaceLocations!.contains(name);
-  // TODO: test these to make sure it works
-  bool isParkingLotDisabled(String name) => disabledParkingLots!.containsKey(name);
-  bool isParkingSpotDisabled(String name) => disabledParkingSpots!.containsKey(name);
+  bool isOccuspaceLocationDisabled(String name) => disabledOccuspaceLocations?.contains(name) ?? false;
+  bool isParkingLotDisabled(String name) => disabledParkingLots?.contains(name) ?? false;
+  bool isParkingLotEnabled(String name) => !isParkingLotDisabled(name);
+  bool isParkingSpotDisabled(String name) => disabledParkingSpots?.contains(name) ?? false;
+  bool isParkingSpotEnabled(String name) => !isParkingSpotDisabled(name);
 }
 
 class Classifications {

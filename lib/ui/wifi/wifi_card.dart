@@ -3,48 +3,49 @@ import 'dart:async';
 import 'package:campus_mobile_experimental/app_constants.dart';
 import 'package:campus_mobile_experimental/app_styles.dart';
 import 'package:campus_mobile_experimental/core/providers/cards.dart';
-import 'package:campus_mobile_experimental/core/providers/speed_test.dart';
 import 'package:campus_mobile_experimental/core/providers/user.dart';
 import 'package:campus_mobile_experimental/ui/common/card_container.dart';
 import 'package:flutter/material.dart';
 import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
 import 'package:provider/provider.dart';
 
-class WiFiCard extends StatefulWidget {
-  @override
-  _WiFiCardState createState() => _WiFiCardState();
-}
+import 'package:flutter_hooks/flutter_hooks.dart';
 
-class _WiFiCardState extends State<WiFiCard>
-    with AutomaticKeepAliveClientMixin {
+class WiFiCard extends HookWidget {
   bool get wantKeepAlive => true;
 
   String cardId = "speed_test";
-  TestStatus? cardState;
   int? lastSpeed;
-  late bool goodSpeed;
-  bool timedOut = false;
-  SpeedTestProvider _speedTestProvider = SpeedTestProvider();
+
+  // TODO: migrate these 3 local state hooks
+  late ValueNotifier<TestStatus> cardState;
+  late ValueNotifier<bool> goodSpeed;
+  late ValueNotifier<bool> timedOut;// = false;
+
+  //SpeedTestProvider _speedTestProvider = SpeedTestProvider();
   UserDataProvider? _userDataProvider;
   bool _buttonEnabled = true;
   Timer? buttonTimer;
   static const int SPEED_TEST_TIMEOUT_CONST = 30;
 
-  @override
-  void initState() {
-    cardState = TestStatus.initial;
-
-    super.initState();
-  }
+  // @override
+  // void initState() {
+  //   cardState = TestStatus.initial;
+  //
+  //   super.initState();
+  // }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _speedTestProvider = Provider.of<SpeedTestProvider>(context);
+   _speedTestProvider = Provider.of<SpeedTestProvider>(context);
   }
 
   @override
   Widget build(BuildContext context) {
+    // initialize all hooks here
+    cardState = useState(TestStatus.initial);
+
     return CardContainer(
       active: Provider.of<CardsDataProvider>(context).cardStates![cardId],
       hide: () => Provider.of<CardsDataProvider>(context, listen: false)
@@ -69,7 +70,8 @@ class _WiFiCardState extends State<WiFiCard>
     );
   }
 
-  Widget buildCardContent(BuildContext context) {
+  Widget buildCardContent(BuildContext context)
+  {
     if (!_speedTestProvider.isUCSDWiFi!) {
       return Padding(
         padding: const EdgeInsets.all(8.0),
@@ -87,7 +89,8 @@ class _WiFiCardState extends State<WiFiCard>
       //TODO: Add print statements to verify not reloading
       try {
         if (_speedTestProvider.onSimulator!) {
-          cardState = TestStatus.simulated;
+          cardState.value = TestStatus.simulated;
+          //cardState = TestStatus.simulated;
         } else if (!_speedTestProvider.isUCSDWiFi!) {
           setState(() {
             cardState = TestStatus.unavailable;

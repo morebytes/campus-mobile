@@ -79,29 +79,16 @@ class CardsDataProvider extends ChangeNotifier {
   final CardsService _cardsService = CardsService();
   Connectivity _connectivity = Connectivity();
 
-  void updateAvailableCards(String? ucsdAffiliation) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+  void updateAvailableCards(String? ucsdAffiliation) async
+  {
+    _isLoading = true; _error = null; notifyListeners();
+
     if (await _cardsService.fetchCards(ucsdAffiliation)) {
       _availableCards = _cardsService.cardsModel;
       _lastUpdated = DateTime.now();
 
       if (_availableCards!.isNotEmpty) {
-        // used for search and remove algorithms below
-        // checks if card no longer exists or is not active
-        final testFunc = (String key) => _availableCards![key]?.cardActive != true;
-
-        // remove all inactive or non-existent cards from [_cardOrder]
-        _cardOrder!.removeWhere(testFunc);
-
-        // remove all inactive or non-existent cards from [_cardStates]
-        _cardStates!.removeWhere((key, _) => testFunc(key));
-
-        // add active webCards
-        _cardStates!.keys
-            .where((card) => _availableCards![card]!.isWebCard!)
-            .forEach((card) => _webCards![card] = _availableCards![card]);
+        _cardOrder!.clear();
 
         // add new cards to the top of the list
         _availableCards!
@@ -109,6 +96,7 @@ class CardsDataProvider extends ChangeNotifier {
               if (_studentCards.contains(model) || _staffCards.contains(model))
                 return;
 
+              // add active webcards
               if (model.isWebCard ?? false)
                 _webCards![card] = model;
 
@@ -125,8 +113,7 @@ class CardsDataProvider extends ChangeNotifier {
     } else {
       _error = _cardsService.error;
     }
-    _isLoading = false;
-    notifyListeners();
+    _isLoading = false; notifyListeners();
   }
 
   Future changeInternetStatus(bool noInternet) async {
@@ -234,13 +221,13 @@ class CardsDataProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  _deactivateAllCards() {
+  void _deactivateAllCards() {
     for (String card in _cardStates!.keys) {
       _cardStates![card] = false;
     }
   }
 
-  activateStudentCards() {
+  void activateStudentCards() {
     int index = _cardOrder!.indexOf('MyStudentChart') + 1;
     _cardOrder!.insertAll(index, _studentCards.toList());
 
@@ -251,7 +238,7 @@ class CardsDataProvider extends ChangeNotifier {
     updateCardStates();
   }
 
-  showAllStudentCards() {
+  void showAllStudentCards() {
     int index = _cardOrder!.indexOf('MyStudentChart') + 1;
     _cardOrder!.insertAll(index, _studentCards.toList());
 
@@ -266,7 +253,7 @@ class CardsDataProvider extends ChangeNotifier {
     updateCardStates();
   }
 
-  deactivateStudentCards() {
+  void deactivateStudentCards() {
     for (String card in _studentCards) {
       _cardOrder!.remove(card);
       _cardStates![card] = false;
@@ -275,7 +262,7 @@ class CardsDataProvider extends ChangeNotifier {
     updateCardStates();
   }
 
-  activateStaffCards() {
+  void activateStaffCards() {
     int index = _cardOrder!.indexOf('MyStudentChart') + 1;
     _cardOrder!.insertAll(index, _staffCards.toList());
 
@@ -285,7 +272,7 @@ class CardsDataProvider extends ChangeNotifier {
     updateCardStates();
   }
 
-  showAllStaffCards() {
+  void showAllStaffCards() {
     int index = _cardOrder!.indexOf('MyStudentChart') + 1;
     _cardOrder!.insertAll(index, _staffCards.toList());
 
@@ -299,7 +286,7 @@ class CardsDataProvider extends ChangeNotifier {
     updateCardStates();
   }
 
-  deactivateStaffCards() {
+  void deactivateStaffCards() {
     for (String card in _staffCards) {
       _cardOrder!.remove(card);
       _cardStates![card] = false;

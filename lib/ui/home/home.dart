@@ -114,26 +114,25 @@ class _HomeState extends State<Home> {
     return noticesCards;
   }
 
-  // TODO: upgrade to Dart 2.15.0+ to use this optimized version
-  // // Constructor tear-offs used below to generate ordered cards list in O(1) time
-  // static const _cardCtors = {
-  //   'NativeScanner': NativeScannerCard.new,
-  //   'MyStudentChart': MyStudentChartCard.new,
-  //   'dining': DiningCard.new,
-  //   'news': NewsCard.new,
-  //   'events': EventsCard.new,
-  //   'triton_media': MediaCard.new,
-  //   'weather': WeatherCard.new,
-  //   'availability': AvailabilityCard.new,
-  //   'schedule': ClassScheduleCard.new,
-  //   'finals': FinalsCard.new,
-  //   'MyUCSDChart': MyUCSDChartCard.new,
-  //   'student_id': StudentIdCard.new,
-  //   'employee_id': EmployeeIdCard.new,
-  //   'parking': ParkingCard.new,
-  //   'speed_test': WiFiCard.new,
-  //   'shuttle': ShuttleCard.new
-  // };
+  // Constructor tear-offs used below to generate ordered cards list in O(1) time
+  static const _cardCtors = {
+    'NativeScanner': NativeScannerCard.new,
+    'MyStudentChart': MyStudentChartCard.new,
+    'dining': DiningCard.new,
+    'news': NewsCard.new,
+    'events': EventsCard.new,
+    'triton_media': MediaCard.new,
+    'weather': WeatherCard.new,
+    'availability': AvailabilityCard.new,
+    'schedule': ClassScheduleCard.new,
+    'finals': FinalsCard.new,
+    'MyUCSDChart': MyUCSDChartCard.new,
+    'student_id': StudentIdCard.new,
+    'employee_id': EmployeeIdCard.new,
+    'parking': ParkingCard.new,
+    'speed_test': WiFiCard.new,
+    'shuttle': ShuttleCard.new
+  };
 
   List<Widget> getOrderedCardsList(List<String> order) {
     List<Widget> orderedCards = [];
@@ -142,59 +141,9 @@ class _HomeState extends State<Home> {
 
     for (String cardName in order) {
       if (!webCards!.containsKey(cardName)) {
-        // final cardCtor = _cardCtors[cardName];
-        // if (cardCtor == null) continue;
-        // orderedCards.add(cardCtor());
-        switch (cardName) {
-          case 'NativeScanner':
-            orderedCards.add(NativeScannerCard());
-            break;
-          case 'MyStudentChart':
-            orderedCards.add(MyStudentChartCard());
-            break;
-          case 'dining':
-            orderedCards.add(DiningCard());
-            break;
-          case 'news':
-            orderedCards.add(NewsCard());
-            break;
-          case 'events':
-            orderedCards.add(EventsCard());
-            break;
-          case 'triton_media':
-            orderedCards.add(MediaCard());
-            break;
-          case 'weather':
-            orderedCards.add(WeatherCard());
-            break;
-          case 'availability':
-            orderedCards.add(AvailabilityCard());
-            break;
-          case 'schedule':
-            orderedCards.add(ClassScheduleCard());
-            break;
-          case 'finals':
-            orderedCards.add(FinalsCard());
-            break;
-          case 'MyUCSDChart':
-            orderedCards.add(MyUCSDChartCard());
-            break;
-          case 'student_id':
-            orderedCards.add(StudentIdCard());
-            break;
-          case 'employee_id':
-            orderedCards.add(EmployeeIdCard());
-            break;
-          case 'parking':
-            orderedCards.add(ParkingCard());
-            break;
-          case 'speed_test':
-            orderedCards.add(WiFiCard());
-            break;
-          case 'shuttle':
-            orderedCards.add(ShuttleCard());
-            break;
-        }
+        final cardCtor = _cardCtors[cardName];
+        if (cardCtor == null) continue;
+        orderedCards.add(cardCtor());
       } else {
         // dynamically insert webCards into the list
         orderedCards.add(WebViewContainer(

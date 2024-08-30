@@ -41,7 +41,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   InternetConnectivityProvider? _connectivityProvider;
-  Future<Null> initUniLinks(BuildContext context) async {
+  Future<Null> initUniLinks() async {
     // deep links are received by this method
     // the specific host needs to be added in AndroidManifest.xml and Info.plist
     // currently, this method handles executing custom map query
@@ -55,7 +55,7 @@ class _HomeState extends State<Home> {
       var uri = Uri.dataFromString(initialLink);
       var query = uri.queryParameters['query']!;
       // redirect query to maps tab and search with query
-      executeQuery(context, query);
+      executeQuery(query);
     }
 
     // used to handle links while app is in foreground/background
@@ -65,54 +65,47 @@ class _HomeState extends State<Home> {
         var uri = Uri.dataFromString(link);
         var query = uri.queryParameters['query']!;
         // redirect query to maps tab and search with query
-        executeQuery(context, query);
+        executeQuery(query);
         // received deeplink, cancel stream to prevent memory leaks
         _sub.cancel();
       }
     });
   }
 
-  void executeQuery(BuildContext context, String query) {
-    Provider.of<MapsDataProvider>(context, listen: false)
+  void executeQuery(String query) {
+    context.read<MapsDataProvider>()
         .searchBarController
         .text = query;
-    Provider.of<MapsDataProvider>(context, listen: false).fetchLocations();
-    Provider.of<BottomNavigationBarProvider>(context, listen: false)
+    context.read<MapsDataProvider>().fetchLocations();
+    context.read<BottomNavigationBarProvider>()
         .currentIndex = NavigatorConstants.MapTab;
-    Provider.of<CustomAppBar>(context, listen: false).changeTitle("Maps");
+    context.read<CustomAppBar>().changeTitle("Maps");
     executedInitialDeeplinkQuery = true;
   }
 
   @override
   Widget build(BuildContext context) {
-    initUniLinks(context);
+    initUniLinks();
     _connectivityProvider = Provider.of<InternetConnectivityProvider>(context);
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: cardMargin, vertical: 0.0),
+      padding: const EdgeInsets.symmetric(horizontal: cardMargin, vertical: 0.0),
       child: ListView(
-        padding: EdgeInsets.only(
+        padding: const EdgeInsets.only(
             top: cardMargin + 2.0, right: 0.0, bottom: 0.0, left: 0.0),
-        children: createList(context),
+        children: createList(),
       ),
     );
   }
 
-  List<Widget> createList(BuildContext context) {
-    List<Widget> orderedCards =
-        getOrderedCardsList(Provider.of<CardsDataProvider>(context).cardOrder!);
-    List<Widget> noticesCards = getNoticesCardsList(
-        Provider.of<NoticesDataProvider>(context).noticesModel!);
-
+  List<Widget> createList()
+  {
+    final orderedCards = getOrderedCardsList(context.watch<CardsDataProvider>().cardOrder!);
+    final noticesCards = getNoticesCardsList(context.watch<NoticesDataProvider>().noticesModel!);
     return noticesCards + orderedCards;
   }
 
-  List<Widget> getNoticesCardsList(List<NoticesModel> notices) {
-    List<Widget> noticesCards = [];
-    for (NoticesModel notice in notices) {
-      noticesCards.add(NoticesCard(notice: notice));
-    }
-    return noticesCards;
-  }
+  List<Widget> getNoticesCardsList(List<NoticesModel> notices) =>
+    notices.map((notice) => NoticesCard(notice: notice)).toList();
 
   // Constructor tear-offs used below to generate ordered cards list in O(1) time
   static const _cardCtors = {
@@ -134,16 +127,16 @@ class _HomeState extends State<Home> {
     'shuttle': ShuttleCard.new
   };
 
-  List<Widget> getOrderedCardsList(List<String> order) {
-    List<Widget> orderedCards = [];
-    Map<String, CardsModel?>? webCards =
-        Provider.of<CardsDataProvider>(context, listen: false).webCards;
+  List<Widget> getOrderedCardsList(List<String> order)
+  {
+    final orderedCards = <Widget>[];
+    final webCards = context.read<CardsDataProvider>().webCards;
 
     for (String cardName in order) {
       if (!webCards!.containsKey(cardName)) {
         final cardCtor = _cardCtors[cardName];
-        if (cardCtor == null) continue;
-        orderedCards.add(cardCtor());
+        if (cardCtor != null)
+          orderedCards.add(cardCtor());
       } else {
         // dynamically insert webCards into the list
         orderedCards.add(WebViewContainer(

@@ -16,18 +16,18 @@ class _CardsViewState extends State<CardsView> {
   @override
   void initState() {
     super.initState();
-    Provider.of<CardsDataProvider>(context, listen: false).monitorInternet();
+    context.read<CardsDataProvider>().monitorInternet();
   }
 
   @override
   Widget build(BuildContext context) {
     _cardsDataProvider = Provider.of<CardsDataProvider>(context);
-    return ContainerView(child: buildCardsList(context));
+    return ContainerView(child: buildCardsList());
   }
 
-  Widget buildCardsList(BuildContext context) {
-    var tempView = new ReorderableListView(
-      children: createList(context),
+  Widget buildCardsList() {
+    var tempView = ReorderableListView(
+      children: createList(),
       onReorder: (int oldIndex, int newIndex) {
         if (newIndex > oldIndex)
           newIndex -= 1;
@@ -61,12 +61,12 @@ class _CardsViewState extends State<CardsView> {
     return tempView;
   }
 
-  List<Widget> createList(BuildContext context) {
+  List<Widget> createList() {
     List<Widget> list = [];
     for (String card in _cardsDataProvider!.cardOrder!) {
       try {
         list.add(ListTile(
-          leading: Icon(Icons.reorder),
+          leading: const Icon(Icons.reorder),
           key: Key(card),
           title: Text(_cardsDataProvider!.availableCards![card]!.titleText!),
           trailing: Switch(
